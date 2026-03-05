@@ -147,7 +147,9 @@ fn source_file_names<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
                 match source_file_names(entry.path()) {
                     Ok(recursive_names) => recursive_names
                         .into_iter()
-                        .map(|recursive_name| names.push(recursive_name))
+                        .map(|recursive_name| {
+                            names.push(entry.path().join(PathBuf::from(recursive_name)))
+                        })
                         .collect(),
                     Err(_) => continue,
                 }
