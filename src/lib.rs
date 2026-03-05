@@ -164,7 +164,7 @@ fn source_file_names<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
                         }
                     }
                 }
-                Err(_) => continue,
+                Err(err) => return Err(err),
             };
         }
 
