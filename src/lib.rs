@@ -143,6 +143,15 @@ fn source_file_names<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         if !fs::metadata(entry.path())?.is_file() {
+            if fs::metadata(entry.path())?.is_dir() {
+                match source_file_names(entry.path()) {
+                    Ok(recursive_names) => recursive_names
+                        .into_iter()
+                        .map(|recursive_name| names.push(recursive_name))
+                        .collect(),
+                    Err(_) => continue,
+                }
+            }
             continue;
         }
 
