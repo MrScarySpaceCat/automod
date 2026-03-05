@@ -142,19 +142,30 @@ fn source_file_names<P: AsRef<Path>>(dir: P) -> Result<Vec<String>> {
 
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
-        if !fs::metadata(entry.path())?.is_file() {
-            if fs::metadata(entry.path())?.is_dir() {
-                match source_file_names(entry.path()) {
-                    Ok(recursive_names) => recursive_names
-                        .into_iter()
-                        .map(|recursive_name| {
-                            names.push(entry.path().join(PathBuf::from(recursive_name)))
-                        })
-                        .collect(),
-                    Err(_) => continue,
+        if fs::metadata(entry.path())?.is_dir() {
+            match source_file_names(entry.path()) {
+                Ok(recursive_names) => {
+                    for recursive_name in recursive_names.into_iter() {
+                        let file_name = entry
+                            .path()
+                            .join(PathBuf::from(recursive_name))
+                            .into_os_string();
+                        let path = Path::new(&file_name);
+                        if path.extension() == Some(OsStr::new("rs")) {
+                            match file_name.into_string() {
+                                Ok(mut utf8) => {
+                                    utf8.truncate(utf8.len() - ".rs".len());
+                                    names.push(utf8);
+                                }
+                                Err(non_utf8) => {
+                                    failures.push(non_utf8);
+                                }
+                            }
+                        }
+                    }
                 }
-            }
-            continue;
+                Err(_) => continue,
+            };
         }
 
         let file_name = entry.file_name();
